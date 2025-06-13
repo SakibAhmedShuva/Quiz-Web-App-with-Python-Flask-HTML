@@ -52,9 +52,17 @@
         /* --- Main Content & Cards --- */
         .main { padding: 3rem 0; }
         .card { background: var(--card-bg); border-radius: 20px; padding: 2rem; box-shadow: var(--shadow-lg); margin-bottom: 2rem; border: 1px solid var(--border); transition: all 0.3s ease; }
+        .card-title {
+            margin-bottom: 2rem;
+            font-size: 1.8rem;
+            color: var(--accent);
+        }
         
         /* --- Setup Form --- */
-        .form-label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        .form-label { display: block; font-weight: 600; margin-bottom: 0.75rem; }
         .chapter-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 0.75rem; }
         .chapter-checkbox { position: absolute; opacity: 0; }
         .chapter-label { display: block; padding: 0.75rem 1rem; background: var(--secondary); border: 2px solid var(--border); border-radius: 12px; cursor: pointer; transition: all 0.2s ease; text-align: center; }
@@ -68,6 +76,10 @@
         input:checked + .slider { background-color: var(--accent); }
         input:checked + .slider:before { transform: translateX(22px); }
         .btn { background: var(--primary); color: white; border: none; padding: 1rem 2rem; border-radius: 12px; font-size: 1rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; }
+        #setupForm .btn {
+            margin-top: 2rem;
+            width: 100%;
+        }
         .btn:disabled { opacity: 0.6; cursor: not-allowed; }
 
         /* --- Quiz Section --- */
@@ -120,7 +132,7 @@
             <!-- Setup Section -->
             <section id="setupSection">
                 <div class="card">
-                    <h2 style="margin-bottom: 1.5rem; font-size: 1.8rem; color: var(--accent);">Create Your Quiz</h2>
+                    <h2 class="card-title">Create Your Quiz</h2>
                     <div id="loadingChapters" class="loading"><div class="spinner"></div><span style="margin-left: 1rem;">Loading chapters...</span></div>
                     <form id="setupForm" class="hidden">
                         <div class="form-group"><label class="form-label">1. Select Chapters</label><div id="chaptersGrid" class="chapter-grid"></div></div>
@@ -225,18 +237,33 @@
             async loadChapters() {
                 this.show(this.getEl('loadingChapters'));
                 this.hide(this.getEl('setupForm'));
+                this.hide(this.getEl('errorAlert'));
+
                 try {
                     const response = await fetch('/chapters');
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    if (!response.ok) {
+                        // Try to get a specific error message from the API, or a generic one.
+                        const errorData = await response.json().catch(() => ({ error: `Server returned status ${response.status}` }));
+                        throw new Error(errorData.error || 'Failed to load chapters.');
+                    }
                     const data = await response.json();
+
+                    if (!data.chapters || data.chapters.length === 0) {
+                        throw new Error("No chapters found. Please check the 'data' directory on the server.");
+                    }
+
                     this.chapters = data.chapters;
                     this.renderChapters();
-                    this.show(this.getEl('setupForm'));
-                } catch (error) {
-                    this.getEl('errorAlert').textContent = `Error loading chapters: ${error.message}. Is the server running?`;
-                    this.show(this.getEl('errorAlert'));
-                } finally {
+                    
+                    // Hide loader, THEN show the now-populated form.
                     this.hide(this.getEl('loadingChapters'));
+                    this.show(this.getEl('setupForm'));
+
+                } catch (error) {
+                    // Display a helpful error and keep the form hidden.
+                    this.getEl('errorAlert').textContent = `Could not load chapters: ${error.message}`;
+                    this.show(this.getEl('errorAlert'));
+                    this.hide(this.getEl('loadingChapters')); // Ensure loader is hidden on error.
                 }
             }
 
