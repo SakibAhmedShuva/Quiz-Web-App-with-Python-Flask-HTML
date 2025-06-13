@@ -1,4 +1,5 @@
 import os
+import sys  # Import the sys module to use sys.exit
 import pandas as pd
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
@@ -15,9 +16,19 @@ DATA_FOLDER = os.path.join(os.path.dirname(__file__), 'data')
 
 def get_available_chapters():
     """Scans the data directory and returns a list of available chapter names."""
+    # This function is already designed to handle a missing directory gracefully
+    # by returning an empty list, which we will check at startup.
     try:
         files = os.listdir(DATA_FOLDER)
-        chapters = [os.path.splitext(f)[0] for f in files if f.endswith('.csv')]
+        # Filter for non-empty CSV files only
+        chapters = []
+        for f in files:
+            if f.endswith('.csv'):
+                try:
+                    if os.path.getsize(os.path.join(DATA_FOLDER, f)) > 0:
+                        chapters.append(os.path.splitext(f)[0])
+                except OSError:
+                    continue # Ignore files that can't be accessed
         return sorted(chapters)
     except FileNotFoundError:
         return []
@@ -37,7 +48,7 @@ def load_questions_from_chapters(chapter_list):
                 continue
     
     if not all_dfs:
-        return None
+        return pd.DataFrame() # Return an empty DataFrame instead of None
 
     return pd.concat(all_dfs, ignore_index=True)
 
@@ -56,8 +67,9 @@ def home():
 def list_chapters():
     """Endpoint to list all available chapters."""
     chapters = get_available_chapters()
+    # This check is now redundant because of the startup check, but good for safety
     if not chapters:
-        return jsonify({"error": "No chapter data found in the 'data' directory."}), 404
+        return jsonify({"error": "No chapter data found. The 'data' directory on the server is likely empty."}), 404
     return jsonify({"chapters": chapters})
 
 
@@ -82,7 +94,8 @@ def create_quiz():
 
     all_questions_df = load_questions_from_chapters(selected_chapters)
 
-    if all_questions_df is None or all_questions_df.empty:
+    # UPDATED: Check for an empty DataFrame correctly.
+    if all_questions_df.empty:
         return jsonify({"error": f"No questions found for the specified chapters: {', '.join(selected_chapters)}"}), 404
 
     num_available = len(all_questions_df)
@@ -118,12 +131,17 @@ def create_quiz():
     return jsonify(response)
 
 
-# --- Main execution block ---
+# --- Main execution block (UPDATED) ---
 if __name__ == '__main__':
-    if not os.path.exists(DATA_FOLDER) or not os.listdir(DATA_FOLDER):
+    # Strict check for the data directory and its contents at startup
+    if not get_available_chapters():
         print("---" * 20)
-        print("WARNING: The 'data' directory is missing or empty.")
-        print("Please create a 'data' folder and add your chapter CSV files.")
+        print("FATAL ERROR: The 'data' directory is missing, empty, or contains no valid/non-empty CSV files.")
+        print(f"Please create a 'data' folder in the same directory as '{__file__}' and add your chapter CSV files.")
         print("---" * 20)
+        sys.exit(1) # Exit the script with an error code
     
+    print("---" * 20)
+    print("Found chapter data. Starting the Quiz Master server...")
+    print("---" * 20)
     app.run(debug=True, port=5000)
