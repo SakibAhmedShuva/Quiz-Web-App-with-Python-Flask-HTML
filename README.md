@@ -16,6 +16,12 @@ A sleek, modern, and interactive quiz platform built with a Python and Flask bac
 ![image](https://github.com/user-attachments/assets/9e6ba774-3e65-4c70-bbdd-6712d7c7bb4e)
 
 
+![image](https://github.com/user-attachments/assets/52212cb9-09fa-4133-baf5-63801dfd2f67)
+
+
+![image](https://github.com/user-attachments/assets/2089748d-4431-4110-b466-d387fab09d25)
+
+
 *Note: Add a screenshot.png file to the root of your repository for the image above to display correctly.*
 
 ## ✨ Key Features
