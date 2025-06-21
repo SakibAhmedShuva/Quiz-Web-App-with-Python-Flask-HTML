@@ -7,7 +7,14 @@
 
 A sleek, modern, and interactive quiz platform built with a Python and Flask backend and a pure HTML, CSS, and JavaScript frontend. This application allows users to generate custom quizzes from a library of questions stored in CSV files.
 
-![Screenshot](screenshot.png)
+![image](https://github.com/user-attachments/assets/89a90742-07b8-4908-aeff-c4c7b1c9de8c)
+
+
+![image](https://github.com/user-attachments/assets/618245c8-db48-4a29-b169-fd51e2ee23f6)
+
+
+![image](https://github.com/user-attachments/assets/9e6ba774-3e65-4c70-bbdd-6712d7c7bb4e)
+
 
 *Note: Add a screenshot.png file to the root of your repository for the image above to display correctly.*
 
